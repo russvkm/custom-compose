@@ -40,7 +40,7 @@ private fun CustomButton(
         colors = ButtonDefaults.buttonColors(containerColor = backgroundColor),
         onClick = {
             if (!loading) {
-                onClick
+                onClick()
             }
         },
         modifier = modifier,

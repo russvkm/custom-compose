@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    `maven-publish`
 }
 
 android {
@@ -30,6 +31,48 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+    }
+}
+
+tasks.register("sourcesJar", Jar::class.java) {
+    description = "Creates a jar file containing the sources."
+    group = "build"
+    archiveClassifier.set("sources")
+    from(android.sourceSets["main"].java.srcDirs)
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "ui-library"
+            url = uri("https://maven.pkg.github.com/russvkm/custom-compose")
+        }
+    }
+    publications {
+        create<MavenPublication>("custom-compose") {
+            artifact("$buildDir/outputs/aar/${project.name}-release.aar")
+
+            // publishes the source code
+            artifact(tasks["sourcesJar"])
+
+            groupId = "com.russvkm"
+            artifactId = "custom-compose"
+            version = version
+
+            pom.withXml {
+                val dependenciesNode = asNode().appendNode("dependencies")
+                configurations["api"].allDependencies.forEach {
+                    val dependencyNode = dependenciesNode.appendNode("dependency")
+                    dependencyNode.appendNode("groupId", it.group)
+                    dependencyNode.appendNode("artifactId", it.name)
+                    dependencyNode.appendNode("version", it.version)
+                    dependencyNode.appendNode(
+                        "scope",
+                        "compile"
+                    ) // "compile" for API, "runtime" for implementation
+                }
+            }
+        }
     }
 }
 
